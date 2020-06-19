@@ -415,6 +415,30 @@ export class Spotify implements INodeType {
 				description: `The track's Spotify URI or ID.`,
 			},
 			{
+				displayName: 'Return All',
+				name: 'returnAll',
+				type: 'boolean',
+				default: false,
+				required: true,
+				displayOptions: {
+					show: {
+						resource: [
+							'player',
+							'albums',
+							'artists',
+							'playlists'
+						],
+						operation: [
+							'recently-played',
+							'tracks',
+							'albums',
+							'user-playlists'
+						]
+					},
+				},
+				description: `The number of items to return.`,
+			},
+			{
 				displayName: 'Limit',
 				name: 'limit',
 				type: 'number',
@@ -442,30 +466,6 @@ export class Spotify implements INodeType {
 				typeOptions: {
 					minValue: 1,
 					maxValue: 100,
-				},
-				description: `The number of items to return.`,
-			},
-			{
-				displayName: 'Return All',
-				name: 'returnAll',
-				type: 'boolean',
-				default: false,
-				required: true,
-				displayOptions: {
-					show: {
-						resource: [
-							'player',
-							'albums',
-							'artists',
-							'playlists'
-						],
-						operation: [
-							'recently-played',
-							'tracks',
-							'albums',
-							'user-playlists'
-						]
-					},
 				},
 				description: `The number of items to return.`,
 			},
