@@ -468,6 +468,28 @@ export class Spotify implements INodeType {
 				},
 				description: `The number of items to return.`,
 			},
+			{
+				displayName: 'Limit',
+				name: 'limit',
+				type: 'number',
+				default: 50,
+				required: true,
+				displayOptions: {
+					show: {
+						resource: [
+							'player',
+						],
+						operation: [
+							'recentlyPlayed',
+						],
+					},
+				},
+				typeOptions: {
+					minValue: 1,
+					maxValue: 50,
+				},
+				description: `The number of items to return.`,
+			},
 		]
 	};
 
@@ -520,15 +542,15 @@ export class Spotify implements INodeType {
 
 					endpoint = `/me/${resource}/recently-played`;
 
-					returnAll = this.getNodeParameter('returnAll', 0) as boolean;
+					//returnAll = this.getNodeParameter('returnAll', 0) as boolean;
 
-					if(!returnAll) {
+					//if(!returnAll) {
 						const limit = this.getNodeParameter('limit', 0) as number;
 
 						qs = {
 							'limit': limit
 						};
-					}
+					//}
 				} else if(operation === 'currentlyPlaying') {
 					requestMethod = 'GET';
 
