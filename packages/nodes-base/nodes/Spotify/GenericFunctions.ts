@@ -23,7 +23,7 @@ interface N8nErrorAPIResponse {
 
 // Global NODEs HELPER
 // Note: the errorObj comes in a variety of forms and therefore must of type any
-const get = (errorObj: any, box: N8nErrorAPI): N8nErrorAPIResponse => { // tslint:disable-line:no-any
+const errorHandler = (errorObj: any, box: N8nErrorAPI): N8nErrorAPIResponse => { // tslint:disable-line:no-any
   let errorObjCopy: any; // tslint:disable-line:no-any
   const apiStandard: N8nErrorAPIResponse = {code: '', message: ''};
 
@@ -32,7 +32,6 @@ const get = (errorObj: any, box: N8nErrorAPI): N8nErrorAPIResponse => { // tslin
     value.forEach((entry: string) => {
       errorObjCopy = errorObjCopy[entry];
 	});
-	//console.log(key);
     apiStandard[key] = errorObjCopy.toString();
   }
 
@@ -86,33 +85,14 @@ export async function spotifyApiRequest(this: IHookFunctions | IExecuteFunctions
 
 		return await this.helpers.requestOAuth2.call(this, 'spotifyOAuth2Api', options);
 	} catch (error) {
-		//console.log(error.error.status);
-
 		const box2ToN8nErrorAPITransformer: N8nErrorAPI = {
 			code: ["error", "error", "status"],
 			message: ["error", "error", "message"]
 		};
 
-		const errorObj = get(error, box2ToN8nErrorAPITransformer);
+		const errorObj = errorHandler(error, box2ToN8nErrorAPITransformer);
 
 		userDisplayNodeError("Spotify", errorObj.code, errorObj.message);
-
-		// if (error.statusCode === 401) {
-		// 	// Return a clear error
-		// 	throw new Error('The Spotify credentials are not valid!');
-		// }
-
-		// if (error.statusCode === 403 && error.response.body.message === 'Player command failed: Premium required') {
-		// 	throw new Error('You must have Spotify Premium for this operation!');
-		// }
-
-		// if (error.response && error.response.body && error.response.body.message) {
-		// 	// Try to return the error prettier
-		// 	throw new Error(`Spotify error response [${error.statusCode}]: ${error.response.body.message}`);
-		// }
-
-		// // If that data does not exist for some reason return the actual error
-		// throw error;
 	}
 }
 
