@@ -11,19 +11,20 @@ import {
 
 // Array of String since the Code could be Nested
 interface n8nErrorAPI {
-    'code': string[];
-    'message': string[];
+    code: string[];
+    message: string[];
 }
 
 interface n8nErrorAPIResponse {
-    'code': string;
-    'message': string;
+    [key: string]: string,
+    code: string;
+    message: string;
 }
 
 // Global NODEs HELPER
 const get = (errorObj: any, box: n8nErrorAPI): n8nErrorAPIResponse => {
   let errorObjCopy: any;
-  const apiStandard: n8nErrorAPIResponse = {'code': '', 'message': ''};
+  const apiStandard: n8nErrorAPIResponse = {code: '', message: ''};
 
   for (const [key, value] of Object.entries(box)) {
     errorObjCopy = errorObj;
