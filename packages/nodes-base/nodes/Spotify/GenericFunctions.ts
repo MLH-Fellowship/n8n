@@ -9,6 +9,39 @@ import {
 	IDataObject,
 } from 'n8n-workflow';
 
+// Array of String since the Code could be Nested
+interface n8nErrorAPI {
+    'code': string[];
+    'message': string[];
+}
+
+interface n8nErrorAPIResponse {
+    'code': string;
+    'message': string;
+}
+
+// Global NODEs HELPER
+const get = (errorObj: any, box: n8nErrorAPI): n8nErrorAPIResponse => {
+  let errorObjCopy: any;
+  const apiStandard: n8nErrorAPIResponse = {'code': '', 'message': ''};
+
+  for (const [key, value] of Object.entries(box)) {
+    errorObjCopy = errorObj;
+    value.forEach((entry: string) => {
+      errorObjCopy = errorObjCopy[entry];
+	});
+	//console.log(key);
+    apiStandard[key] = errorObjCopy.toString();
+  }
+
+  return apiStandard;
+};
+
+
+const userDisplayNodeError = (nodeName: string, statusCode: string, errorMessage: string): string => {
+	throw new Error(`${nodeName} error response [${statusCode}]: ${errorMessage}`);
+};
+
 /**
  * Make an API request to Spotify
  *
@@ -51,22 +84,33 @@ export async function spotifyApiRequest(this: IHookFunctions | IExecuteFunctions
 
 		return await this.helpers.requestOAuth2.call(this, 'spotifyOAuth2Api', options);
 	} catch (error) {
-		if (error.statusCode === 401) {
-			// Return a clear error
-			throw new Error('The Spotify credentials are not valid!');
-		}
+		//console.log(error.error.status);
 
-		if (error.statusCode === 403 && error.response.body.message === 'Player command failed: Premium required') {
-			throw new Error('You must have Spotify Premium for this operation!');
-		}
+		const box2ToN8nErrorAPITransformer: n8nErrorAPI = {
+			code: ["error", "error", "status"],
+			message: ["error", "error", "message"]
+		};
 
-		if (error.response && error.response.body && error.response.body.message) {
-			// Try to return the error prettier
-			throw new Error(`Spotify error response [${error.statusCode}]: ${error.response.body.message}`);
-		}
+		const errorObj = get(error, box2ToN8nErrorAPITransformer);
 
-		// If that data does not exist for some reason return the actual error
-		throw error;
+		userDisplayNodeError("Spotify", errorObj.code, errorObj.message);
+
+		// if (error.statusCode === 401) {
+		// 	// Return a clear error
+		// 	throw new Error('The Spotify credentials are not valid!');
+		// }
+
+		// if (error.statusCode === 403 && error.response.body.message === 'Player command failed: Premium required') {
+		// 	throw new Error('You must have Spotify Premium for this operation!');
+		// }
+
+		// if (error.response && error.response.body && error.response.body.message) {
+		// 	// Try to return the error prettier
+		// 	throw new Error(`Spotify error response [${error.statusCode}]: ${error.response.body.message}`);
+		// }
+
+		// // If that data does not exist for some reason return the actual error
+		// throw error;
 	}
 }
 
