@@ -10,21 +10,22 @@ import {
 } from 'n8n-workflow';
 
 // Array of String since the Code could be Nested
-interface n8nErrorAPI {
+interface N8nErrorAPI {
     code: string[];
     message: string[];
 }
 
-interface n8nErrorAPIResponse {
-    [key: string]: string,
+interface N8nErrorAPIResponse {
+    [key: string]: string;
     code: string;
     message: string;
 }
 
 // Global NODEs HELPER
-const get = (errorObj: any, box: n8nErrorAPI): n8nErrorAPIResponse => {
-  let errorObjCopy: any;
-  const apiStandard: n8nErrorAPIResponse = {code: '', message: ''};
+// Note: the errorObj comes in a variety of forms and therefore must of type any
+const get = (errorObj: any, box: N8nErrorAPI): N8nErrorAPIResponse => { // tslint:disable-line:no-any
+  let errorObjCopy: any; // tslint:disable-line:no-any
+  const apiStandard: N8nErrorAPIResponse = {code: '', message: ''};
 
   for (const [key, value] of Object.entries(box)) {
     errorObjCopy = errorObj;
@@ -87,7 +88,7 @@ export async function spotifyApiRequest(this: IHookFunctions | IExecuteFunctions
 	} catch (error) {
 		//console.log(error.error.status);
 
-		const box2ToN8nErrorAPITransformer: n8nErrorAPI = {
+		const box2ToN8nErrorAPITransformer: N8nErrorAPI = {
 			code: ["error", "error", "status"],
 			message: ["error", "error", "message"]
 		};
