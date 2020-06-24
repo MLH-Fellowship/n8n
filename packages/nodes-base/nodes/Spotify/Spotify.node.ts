@@ -10,6 +10,7 @@ import {
 	spotifyApiRequest,
 	spotifyApiRequestAllItems,
 } from './GenericFunctions';
+import { response } from 'express';
 
 
 export class Spotify implements INodeType {
@@ -48,19 +49,19 @@ export class Spotify implements INodeType {
 						value: 'player',
 					},
 					{
-						name: 'Albums',
+						name: 'Album',
 						value: 'albums',
 					},
 					{
-						name: 'Artists',
+						name: 'Artist',
 						value: 'artists',
 					},
 					{
-						name: 'Playlists',
+						name: 'Playlist',
 						value: 'playlists',
 					},
 					{
-						name: 'Tracks',
+						name: 'Track',
 						value: 'tracks',
 					},
 				],
@@ -423,7 +424,6 @@ export class Spotify implements INodeType {
 				displayOptions: {
 					show: {
 						resource: [
-							'player',
 							'albums',
 							'artists',
 							'playlists'
@@ -446,20 +446,18 @@ export class Spotify implements INodeType {
 				displayOptions: {
 					show: {
 						resource: [
-							'player',
 							'albums',
 							'artists',
 							'playlists'
 						],
 						operation: [
-							'recentlyPlayed',
 							'getTracks',
 							'getAlbums',
 							'getUserPlaylists'
 						],
 						returnAll: [
-							false,
-						],
+							false
+						]
 					},
 				},
 				typeOptions: {
@@ -542,15 +540,11 @@ export class Spotify implements INodeType {
 
 					endpoint = `/me/${resource}/recently-played`;
 
-					//returnAll = this.getNodeParameter('returnAll', 0) as boolean;
+					const limit = this.getNodeParameter('limit', i) as number;
 
-					//if(!returnAll) {
-						const limit = this.getNodeParameter('limit', 0) as number;
-
-						qs = {
-							'limit': limit
-						};
-					//}
+					qs = {
+						'limit': limit
+					};
 				} else if(operation === 'currentlyPlaying') {
 					requestMethod = 'GET';
 
@@ -597,10 +591,10 @@ export class Spotify implements INodeType {
 				} else if(operation === 'getTracks') {
 					endpoint = `/${resource}/${id}/tracks`;
 
-					returnAll = this.getNodeParameter('returnAll', 0) as boolean;
+					returnAll = this.getNodeParameter('returnAll', i) as boolean;
 
 					if(!returnAll) {
-						const limit = this.getNodeParameter('limit', 0) as number;
+						const limit = this.getNodeParameter('limit', i) as number;
 
 						qs = {
 							'limit': limit
@@ -622,10 +616,10 @@ export class Spotify implements INodeType {
 				if(operation === 'getAlbums') {
 					endpoint = endpoint + `/albums`;
 
-					returnAll = this.getNodeParameter('returnAll', 0) as boolean;
+					returnAll = this.getNodeParameter('returnAll', i) as boolean;
 
 					if(!returnAll) {
-						const limit = this.getNodeParameter('limit', 0) as number;
+						const limit = this.getNodeParameter('limit', i) as number;
 
 						qs = {
 							'limit': limit
@@ -660,9 +654,7 @@ export class Spotify implements INodeType {
 						body.tracks = [
 							{
 								"uri": `${trackId}`,
-								"positions": [
-								0
-								]
+								"positions": [ 0 ]
 							}
 						];
 
@@ -676,10 +668,10 @@ export class Spotify implements INodeType {
 
 						endpoint = `/${resource}/${id}/tracks`;
 
-						returnAll = this.getNodeParameter('returnAll', 0) as boolean;
+						returnAll = this.getNodeParameter('returnAll', i) as boolean;
 
 						if(!returnAll) {
-							const limit = this.getNodeParameter('limit', 0) as number;
+							const limit = this.getNodeParameter('limit', i) as number;
 
 							qs = {
 								'limit': limit
@@ -701,10 +693,10 @@ export class Spotify implements INodeType {
 
 					endpoint = `/me/${resource}`;
 
-					returnAll = this.getNodeParameter('returnAll', 0) as boolean;
+					returnAll = this.getNodeParameter('returnAll', i) as boolean;
 
 					if(!returnAll) {
-						const limit = this.getNodeParameter('limit', 0) as number;
+						const limit = this.getNodeParameter('limit', i) as number;
 
 						qs = {
 							'limit': limit
@@ -738,22 +730,26 @@ export class Spotify implements INodeType {
 
 			// Spotify returns the data in a way that makes processing individual items quite difficult, and so I simplify the output
 			// for certain requests
-			for(let i = 0; i < responseData.length; i++) {
-				if(filterItemsFlow.includes(fullOperation)) {
-					for(let j = 0; j < responseData[i].items.length; j++) {
-						returnData.push(responseData[i].items[j]);
+			try {
+				for(let i = 0; i < responseData.length; i++) {
+					if(filterItemsFlow.includes(fullOperation)) {
+						for(let j = 0; j < responseData[i].items.length; j++) {
+							returnData.push(responseData[i].items[j]);
+						}
+					} else if(['artists/getRelatedArtists'].includes(fullOperation)) {
+						for(let j = 0; j < responseData[i].artists.length; j++) {
+							returnData.push(responseData[i].artists[j]);
+						}
+					} else if(['artists/getTopTracks'].includes(fullOperation)) {
+						for(let j = 0; j < responseData[i].tracks.length; j++) {
+							returnData.push(responseData[i].tracks[j]);
+						}
+					} else {
+						returnData.push(responseData[i]);
 					}
-				} else if(['artists/getRelatedArtists'].includes(fullOperation)) {
-					for(let j = 0; j < responseData[i].artists.length; j++) {
-						returnData.push(responseData[i].artists[j]);
-					}
-				} else if(['artists/getTopTracks'].includes(fullOperation)) {
-					for(let j = 0; j < responseData[i].tracks.length; j++) {
-						returnData.push(responseData[i].tracks[j]);
-					}
-				} else {
-					returnData.push(responseData[i]);
 				}
+			} catch {
+				throw new Error("Request failed: Resource not found. Check your resource ID to ensure it is correct.");
 			}
 		}
 
