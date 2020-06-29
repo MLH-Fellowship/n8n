@@ -43,6 +43,40 @@ export async function twitterApiRequest(this: IExecuteFunctions | IExecuteSingle
 	}
 }
 
+
+export async function twitterWebhookRequest(this: IExecuteFunctions | IExecuteSingleFunctions | ILoadOptionsFunctions | IHookFunctions,
+	method: string, resource: string, body: any = {}, qs: IDataObject = {}, oauth: IDataObject = {}, form: IDataObject = {}, uri?: string): Promise<any> { // tslint:disable-line:no-any
+	let options: OptionsWithUrl = {
+		method,
+		body,
+		qs,
+		url: uri || `https://api.twitter.com/1.1${resource}`,
+		oauth,
+		form,
+		json: true
+	};
+
+	console.log(options);
+	try {
+		if (Object.keys(body).length === 0) {
+			delete options.body;
+		}
+
+		//@ts-ignore
+		return await this.helpers.request!(options);
+	} catch (error) {
+		if (error.response && error.response.body && error.response.body.errors) {
+			// Try to return the error prettier
+			const errorMessages = error.response.body.errors.map((error: IDataObject) => {
+				return error.message;
+			});
+			throw new Error(`Twitter error response [${error.statusCode}]: ${errorMessages.join(' | ')}`);
+		}
+
+		throw error;
+	}
+}
+
 export async function twitterApiRequestAllItems(this: IExecuteFunctions | ILoadOptionsFunctions, propertyName: string, method: string, endpoint: string, body: any = {}, query: IDataObject = {}): Promise<any> { // tslint:disable-line:no-any
 
 	const returnData: IDataObject[] = [];
