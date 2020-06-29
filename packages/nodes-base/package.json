@@ -283,6 +283,7 @@
       "dist/nodes/Trello/TrelloTrigger.node.js",
       "dist/nodes/Twilio/Twilio.node.js",
       "dist/nodes/Twitter/Twitter.node.js",
+      "dist/nodes/Twitter/TwitterTrigger.node.js",
       "dist/nodes/Typeform/TypeformTrigger.node.js",
       "dist/nodes/Uplead/Uplead.node.js",
       "dist/nodes/Vero/Vero.node.js",

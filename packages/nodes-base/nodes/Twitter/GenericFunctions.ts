@@ -56,7 +56,7 @@ export async function twitterWebhookRequest(this: IExecuteFunctions | IExecuteSi
 		json: true
 	};
 
-	console.log(options);
+	//console.log(options);
 	try {
 		if (Object.keys(body).length === 0) {
 			delete options.body;

@@ -17,6 +17,8 @@ import {
 	twitterWebhookRequest
  } from './GenericFunctions';
 
+ const crypto = require('crypto');
+
 
 export class TwitterTrigger implements INodeType {
 	description: INodeTypeDescription = {
@@ -44,9 +46,12 @@ export class TwitterTrigger implements INodeType {
 				name: 'default',
 				httpMethod: 'POST',
 				reponseMode: 'onReceived',
-				// Each webhook property can either be hardcoded
-				// like the above ones or referenced from a parameter
-				// like the "path" property bellow
+				path: 'webhook',
+			},
+			{
+				name: 'setup',
+				httpMethod: 'GET',
+				reponseMode: 'onReceived',
 				path: 'webhook',
 			},
 		],
@@ -127,9 +132,9 @@ webhookMethods = {
 			const method = 'POST';
 			const oauth = {
 				consumer_key: 'x6fezM3f4MxxdtAtRxqf9xM1v',
-				consumer_secret: 'UexyCAOgzwWA25z5Hj8nongm3xAKTLRh3bM0iNv9XMj8hJM2IR',
+				consumer_secret: '',
 				token: '1222387514243239936-Ocdpv3kkUoxExc3k6x4dHYiBmNgLvh',
-				token_secret: 'VciXE6HFKochwKZJkndPGnW1zqoCXYBUeI50qQcPoFx6R',
+				token_secret: '',
 			};
 			const form = {
 				url: webhookUrl,
@@ -140,6 +145,7 @@ webhookMethods = {
 				webhook = await twitterWebhookRequest.call(this, method, endpoint, {}, {}, oauth, form);
 				console.log(webhook);
 			} catch (e) {
+				console.log("here is the error");
 				throw e;
 			}
 			if (webhook.id === undefined) {
@@ -151,43 +157,64 @@ webhookMethods = {
 			return true;
 		},
 
-		// async delete(this: IHookFunctions): Promise<boolean> {
-		// 	const webhookData = this.getWorkflowStaticData('node');
-		// 	if (webhookData.webhookId !== undefined) {
-		// 		const endpoint = ` /webhooks`;
-		// 		try {
-		// 			await twitterApiRequest.call(this, 'DELETE', endpoint, {});
-		// 		} catch (e) {
-		// 			return false;
-		// 		}
-		// 		delete webhookData.webhookId;
-		// 		delete webhookData.events;
-		// 		delete webhookData.sources;
-		// 	}
-		// 	return true;
-		// },
+		async delete(this: IHookFunctions): Promise<boolean> {
+			// const webhookData = this.getWorkflowStaticData('node');
+			// if (webhookData.webhookId !== undefined) {
+			// 	const endpoint = ` /webhooks`;
+			// 	try {
+			// 		await twitterApiRequest.call(this, 'DELETE', endpoint, {});
+			// 	} catch (e) {
+			// 		return false;
+			// 	}
+			// 	delete webhookData.webhookId;
+			// 	delete webhookData.events;
+			// 	delete webhookData.sources;
+			// }
+			return true;
+		},
 	},
 };
 
 async webhook(this: IWebhookFunctions): Promise<IWebhookResponseData> {
+	const bodyData = this.getBodyData() as IDataObject;
+	const headerData = this.getHeaderData() as IDataObject;
+	const queryData = this.getQueryData() as IDataObject;
+	const req = this.getRequestObject();
+
 	const webhookData = this.getWorkflowStaticData('node') as IDataObject;
-	console.log("webhookData---------------------------------")
-	console.log(webhookData);
-	const webhookName = this.getWebhookName();
-	console.log("webhookName---------------------------------")
-	console.log(webhookName)
-	if (webhookName === 'setup') {
+
+	console.log(headerData);
+	console.log(queryData);
+
+
+	if (queryData['crc-token'] !== undefined) {
 		// Is a create webhook confirmation request
+		webhookData.crc = queryData['crc-token'];
+
+		console.log(webhookData.crc);
+
+		webhookData.crc = crypto.createHmac('sha256', '').update(webhookData.crc).digest('base64'); //empty string should be consumer secret
+
 		const res = this.getResponseObject();
+		res.set('response-token', webhookData.crc as string);
 		res.status(200).end();
 		return {
 			noWebhookResponse: true,
 		};
 	}
-	const req = this.getRequestObject();
-	if (req.body.id !== webhookData.id) {
-		return {};
-	}
+
+	// if (webhookName === 'setup') {
+	// 	// Is a create webhook confirmation request
+	// 	const res = this.getResponseObject();
+	// 	res.status(200).end();
+	// 	return {
+	// 		noWebhookResponse: true,
+	// 	};
+	// }
+	// const req = this.getRequestObject();
+	// if (req.body.id !== webhookData.id) {
+	// 	return {};
+	// }
 	// @ts-ignore
 	if (!webhookData.events.includes(req.body.type)
 	// @ts-ignore
