@@ -45,13 +45,13 @@ export class TwitterTrigger implements INodeType {
 			{
 				name: 'default',
 				httpMethod: 'POST',
-				reponseMode: 'onReceived',
+				responseMode: 'onReceived',
 				path: 'webhook',
 			},
 			{
 				name: 'setup',
 				httpMethod: 'GET',
-				reponseMode: 'onReceived',
+				responseMode: 'onReceived',
 				path: 'webhook',
 			},
 		],
@@ -132,9 +132,9 @@ webhookMethods = {
 			const method = 'POST';
 			const oauth = {
 				consumer_key: 'x6fezM3f4MxxdtAtRxqf9xM1v',
-				consumer_secret: '',
+				consumer_secret: 'UexyCAOgzwWA25z5Hj8nongm3xAKTLRh3bM0iNv9XMj8hJM2IR',
 				token: '1222387514243239936-Ocdpv3kkUoxExc3k6x4dHYiBmNgLvh',
-				token_secret: '',
+				token_secret: 'VciXE6HFKochwKZJkndPGnW1zqoCXYBUeI50qQcPoFx6R',
 			};
 			const form = {
 				url: webhookUrl,
@@ -193,7 +193,7 @@ async webhook(this: IWebhookFunctions): Promise<IWebhookResponseData> {
 
 		console.log(webhookData.crc);
 
-		webhookData.crc = crypto.createHmac('sha256', '').update(webhookData.crc).digest('base64'); //empty string should be consumer secret
+		webhookData.crc = crypto.createHmac('sha256', 'UexyCAOgzwWA25z5Hj8nongm3xAKTLRh3bM0iNv9XMj8hJM2IR').update(webhookData.crc).digest('base64');
 
 		const res = this.getResponseObject();
 		res.set('response-token', webhookData.crc as string);
