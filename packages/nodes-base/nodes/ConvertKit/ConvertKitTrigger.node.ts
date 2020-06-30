@@ -1,0 +1,160 @@
+import {
+	IHookFunctions,
+	IWebhookFunctions,
+} from 'n8n-core';
+
+import {
+	IDataObject,
+	INodeTypeDescription,
+	INodeType,
+	IWebhookResponseData,
+} from 'n8n-workflow';
+
+import {
+	convertKitApiRequest,
+} from './GenericFunctions';
+
+
+export class ConvertKitTrigger implements INodeType {
+	description: INodeTypeDescription = {
+		displayName: 'Convert Kit Trigger',
+		name: 'convertKitTrigger',
+		group: ['trigger'],
+		version: 1,
+		description: 'Handle ConvertKit events via webhooks',
+		defaults: {
+			name: 'Convert Kit Trigger',
+			color: '#885577',
+		},
+		inputs: [],
+		outputs: ['main'],
+		credentials: [
+			{
+				name: 'convertKitApi',
+				required: true,
+			}
+		],
+		webhooks: [
+			{
+				name: 'default',
+				httpMethod: 'POST',
+				responseMode: 'onReceived',
+				path: 'webhook',
+			},
+		],
+		properties: [
+			{
+				displayName: 'Events',
+				name: 'event',
+				type: 'options',
+				required: true,
+				default: [],
+				description: 'The events that can trigger the webhook and whether they are enabled.',
+				options: [
+					{
+						name: 'Activate Subscriber',
+						value: 'activateSubscriber',
+						description: 'Whether the webhook is triggered when a subscriber is activated.',
+					},
+					{
+						name: 'Link Clicked',
+						value: 'linkClicked',
+						description: 'Whether the webhook is triggered when a link is clicked.',
+					},
+				],
+			},
+			{
+				displayName: 'Initiating Link',
+				name: 'link',
+				type: 'string',
+				required: true,
+				default: '',
+				description: 'The URL of the initiating link',
+				displayOptions: {
+					show: {
+						event: [
+						'linkClicked'
+						]
+					}
+				}
+			}
+		],
+	};
+
+	// @ts-ignore (because of request)
+	webhookMethods = {
+		default: {
+			async checkExists(this: IHookFunctions): Promise<boolean> {
+				const webhookData = this.getWorkflowStaticData('node');
+
+				if(webhookData.webhookId) return true;
+				return false;
+			},
+
+			async create(this: IHookFunctions): Promise<boolean> {
+				let webhook;
+				const webhookUrl = this.getNodeWebhookUrl('default');
+				const event = this.getNodeParameter('event', 0);
+				const endpoint = `/automations/hooks`;
+
+				const qs: IDataObject = {};
+
+				try {
+					qs.target_url = webhookUrl;
+
+					if(event === 'activateSubscriber') {
+						qs.event = {
+							name: 'subscriber.subscriber_activate' ,
+						};
+					} else if(event === 'linkClicked') {
+						const link = this.getNodeParameter('link', 0) as string;
+						qs.event = {
+							name: 'subscriber.link_click',
+							initiator_value: link,
+						};
+					}
+					webhook = await convertKitApiRequest.call(this, 'POST', endpoint, {}, qs);
+				} catch (e) {
+					throw e;
+				}
+
+				if (webhook.rule.id === undefined) {
+					return false;
+				}
+
+				const webhookData = this.getWorkflowStaticData('node');
+				webhookData.webhookId = webhook.rule.id as string;
+				webhookData.events = event;
+				return true;
+			},
+
+			async delete(this: IHookFunctions): Promise<boolean> {
+				let webhook;
+				const webhookData = this.getWorkflowStaticData('node');
+				if (webhookData.webhookId !== undefined) {
+					const endpoint = `/automations/hooks/${webhookData.webhookId}`;
+					try {
+						webhook = await convertKitApiRequest.call(this, 'DELETE', endpoint, {}, {});
+					} catch (e) {
+						return false;
+					}
+					delete webhookData.webhookId;
+					delete webhookData.events;
+				}
+				return true;
+			},
+		},
+	};
+
+
+	async webhook(this: IWebhookFunctions): Promise<IWebhookResponseData> {
+		const returnData: IDataObject[] = [];
+		returnData.push(this.getBodyData());
+
+		return {
+			workflowData: [
+				this.helpers.returnJsonArray(returnData)
+			],
+		};
+	}
+}
