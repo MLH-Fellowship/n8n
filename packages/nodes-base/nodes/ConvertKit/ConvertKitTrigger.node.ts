@@ -44,11 +44,11 @@ export class ConvertKitTrigger implements INodeType {
 		],
 		properties: [
 			{
-				displayName: 'Events',
+				displayName: 'Event',
 				name: 'event',
 				type: 'options',
 				required: true,
-				default: [],
+				default: '',
 				description: 'The events that can trigger the webhook and whether they are enabled.',
 				options: [
 					{
