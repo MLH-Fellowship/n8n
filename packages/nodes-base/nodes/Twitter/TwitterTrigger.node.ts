@@ -8,17 +8,17 @@ import {
 	INodeTypeDescription,
 	INodeType,
 	IWebhookResponseData,
-	ILoadOptionsFunctions,
-	INodePropertyOptions,
   } from 'n8n-workflow';
 
   import {
 	twitterApiRequest,
-	twitterWebhookRequest
+	getAccessToken,
+	genericRequest,
  } from './GenericFunctions';
 
- const crypto = require('crypto');
-
+import {
+	createHmac,
+ } from 'crypto';
 
 export class TwitterTrigger implements INodeType {
 	description: INodeTypeDescription = {
@@ -43,15 +43,15 @@ export class TwitterTrigger implements INodeType {
 		],
 		webhooks: [
 			{
-				name: 'default',
-				httpMethod: 'POST',
-				reponseMode: 'onReceived',
+				name: 'setup',
+				httpMethod: 'GET',
+				responseMode: 'onReceived',
 				path: 'webhook',
 			},
 			{
-				name: 'setup',
-				httpMethod: 'GET',
-				reponseMode: 'onReceived',
+				name: 'default',
+				httpMethod: 'POST',
+				responseMode: 'onReceived',
 				path: 'webhook',
 			},
 		],
@@ -64,6 +64,7 @@ export class TwitterTrigger implements INodeType {
 				default: [],
 				description: 'The events that can trigger the webhook and whether they are enabled.',
 				options: [
+					// TODO add all events
 					{
 						name: 'Liked Tweet',
 						value: 'likedTweet',
@@ -94,137 +95,120 @@ export class TwitterTrigger implements INodeType {
 		],
 	};
 
-// @ts-ignore (because of request)
-webhookMethods = {
-	default: {
-		async checkExists(this: IHookFunctions): Promise<boolean> {
-			// console.log("checkExists---------------------------------")
-			// const options = {
-			// 	url: 'https://api.twitter.com/1.1/account_activity/all/' + 'testing' + '/webhooks.json',
-			// 	oauth: {
-			// 		consumer_key: 'x6fezM3f4MxxdtAtRxqf9xM1v',
-			// 		consumer_secret: 'UexyCAOgzwWA25z5Hj8nongm3xAKTLRh3bM0iNv9XMj8hJM2IR',
-			// 		token: '1222387514243239936-Ocdpv3kkUoxExc3k6x4dHYiBmNgLvh',
-			// 		token_secret: 'VciXE6HFKochwKZJkndPGnW1zqoCXYBUeI50qQcPoFx6R'
-			// 	},
-			// };
-			// const endpoint = '/account_activity/all/' + 'testing' + '/webhooks.json';
-			// try {
-			// 	console.log("options---------------------------------")
-			// 	console.log(options);
-			// 	const trial = await twitterApiRequest.call(this, 'GET', endpoint, options);
-			// 	console.log(trial);
-			// } catch (err) {
-			// 	if (err.statusCode === 404) {
-			// 		return false;
-			// 	}
-			// 	throw new Error(`Twitter Error: ${err}`);
-			// }
-			// return true;
-			return false;
-		},
+	// @ts-ignore (because of request)
+	webhookMethods = {
+		default: {
+			async checkExists(this: IHookFunctions): Promise<boolean> {
 
-		async create(this: IHookFunctions): Promise<boolean> {
-			let webhook;
-			const webhookUrl = this.getNodeWebhookUrl('default');
-			const events = this.getNodeParameter('events', []) as string[];
-			// request options
-			const method = 'POST';
-			const oauth = {
-				consumer_key: 'x6fezM3f4MxxdtAtRxqf9xM1v',
-				consumer_secret: '',
-				token: '1222387514243239936-Ocdpv3kkUoxExc3k6x4dHYiBmNgLvh',
-				token_secret: '',
-			};
-			const form = {
-				url: webhookUrl,
-			};
-			const endpoint = '/account_activity/all/testing/webhooks.json';
-			try {
-				console.log(endpoint);
-				webhook = await twitterWebhookRequest.call(this, method, endpoint, {}, {}, oauth, form);
-				console.log(webhook);
-			} catch (e) {
-				console.log("here is the error");
-				throw e;
-			}
-			if (webhook.id === undefined) {
+				const { access_token } = await getAccessToken.call(this);
+
+				const webhookData = this.getWorkflowStaticData('node');
+
+				const credentials = this.getCredentials('twitterOAuth1Api');
+
+				const webhookUrl = this.getNodeWebhookUrl('default') as string;
+
+				const endpoint = `/account_activity/all/${credentials?.env}/webhooks.json`;
+
+				const webhooks = await genericRequest.call(this, 'GET', endpoint, {}, {}, undefined, { headers: { 'Authorization': `Bearer ${access_token}` } });
+
+				for (const webhook of webhooks) {
+					if (webhook.url === webhookUrl && webhook.valid) {
+						webhookData.webhookId = webhook.id;
+						return true;
+					}
+				}
+
 				return false;
-			}
-			const webhookData = this.getWorkflowStaticData('node');
-			webhookData.webhookId = webhook.id as string;
-			webhookData.events = events;
-			return true;
+			},
+
+			async create(this: IHookFunctions): Promise<boolean> {
+				const webhookUrl = this.getNodeWebhookUrl('default');
+
+				const webhookData = this.getWorkflowStaticData('node');
+
+				const credentials = this.getCredentials('twitterOAuth1Api');
+
+				const method = 'POST';
+
+				const form = {
+					url: webhookUrl,
+				};
+				let endpoint = `/account_activity/all/${credentials?.env}/webhooks.json`;
+
+				const webhook = await twitterApiRequest.call(this, method, endpoint, form);
+
+				if (webhook.id === undefined) {
+					return false;
+				}
+
+				endpoint = `/account_activity/all/${credentials?.env}/subscriptions.json`;
+
+				const subscription = await twitterApiRequest.call(this, method, endpoint, form);
+
+				webhookData.webhookId = webhook.id as string;
+				return true;
+			},
+
+			async delete(this: IHookFunctions): Promise<boolean> {
+				const credentials = this.getCredentials('twitterOAuth1Api');
+
+				const webhookData = this.getWorkflowStaticData('node');
+
+				if (webhookData.webhookId !== undefined) {
+
+					const { access_token } = await getAccessToken.call(this);
+
+					const endpoint = `/account_activity/all/${credentials?.env}/webhooks/${webhookData.webhookId}.json`;
+
+					try {
+						await genericRequest.call(this, 'DELETE', endpoint, {}, {}, undefined, { headers: { 'Authorization': `Bearer ${access_token}` } });
+					} catch (e) {
+						if (e.statusCode === 404) {
+							delete webhookData.webhookId;
+						}
+						return false;
+					}
+
+					delete webhookData.webhookId;
+				}
+
+				return true;
+			},
 		},
+	};
 
-		async delete(this: IHookFunctions): Promise<boolean> {
-			// const webhookData = this.getWorkflowStaticData('node');
-			// if (webhookData.webhookId !== undefined) {
-			// 	const endpoint = ` /webhooks`;
-			// 	try {
-			// 		await twitterApiRequest.call(this, 'DELETE', endpoint, {});
-			// 	} catch (e) {
-			// 		return false;
-			// 	}
-			// 	delete webhookData.webhookId;
-			// 	delete webhookData.events;
-			// 	delete webhookData.sources;
-			// }
-			return true;
-		},
-	},
-};
+	async webhook(this: IWebhookFunctions): Promise<IWebhookResponseData> {
+		const queryData = this.getQueryData() as IDataObject;
+		const req = this.getRequestObject();
 
-async webhook(this: IWebhookFunctions): Promise<IWebhookResponseData> {
-	const bodyData = this.getBodyData() as IDataObject;
-	const headerData = this.getHeaderData() as IDataObject;
-	const queryData = this.getQueryData() as IDataObject;
-	const req = this.getRequestObject();
+		const credentials = this.getCredentials('twitterOAuth1Api');
 
-	const webhookData = this.getWorkflowStaticData('node') as IDataObject;
+		if (this.getWebhookName() === 'setup') {
 
-	console.log(headerData);
-	console.log(queryData);
+			const responseToken = createHmac('sha256', credentials?.consumerSecret as string).update(queryData.crc_token as string).digest('base64');
 
+			const res = this.getResponseObject();
 
-	if (queryData['crc-token'] !== undefined) {
-		// Is a create webhook confirmation request
-		webhookData.crc = queryData['crc-token'];
+			res.status(200).json({
+				response_token: `sha256=${responseToken}`,
+			 });
 
-		console.log(webhookData.crc);
+			return {
+				noWebhookResponse: true,
+			};
+		}
 
-		webhookData.crc = crypto.createHmac('sha256', '').update(webhookData.crc).digest('base64'); //empty string should be consumer secret
+		//TODO
 
-		const res = this.getResponseObject();
-		res.set('response-token', webhookData.crc as string);
-		res.status(200).end();
+		// validate signature from webhooks
+
+		// filter events
+
 		return {
-			noWebhookResponse: true,
+			workflowData: [
+				this.helpers.returnJsonArray(req.body)
+			],
 		};
 	}
-
-	// if (webhookName === 'setup') {
-	// 	// Is a create webhook confirmation request
-	// 	const res = this.getResponseObject();
-	// 	res.status(200).end();
-	// 	return {
-	// 		noWebhookResponse: true,
-	// 	};
-	// }
-	// const req = this.getRequestObject();
-	// if (req.body.id !== webhookData.id) {
-	// 	return {};
-	// }
-	// @ts-ignore
-	if (!webhookData.events.includes(req.body.type)
-	// @ts-ignore
-	&& !webhookData.sources.includes(req.body.type)) {
-		return {};
-	}
-	return {
-		workflowData: [
-			this.helpers.returnJsonArray(req.body)
-		],
-	};
-}
 }

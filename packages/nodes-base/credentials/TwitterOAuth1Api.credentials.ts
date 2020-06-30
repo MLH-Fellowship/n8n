@@ -34,5 +34,13 @@ export class TwitterOAuth1Api implements ICredentialType {
 			type: 'hidden' as NodePropertyTypes,
 			default: 'HMAC-SHA1',
 		},
+		{
+			displayName: 'Environment',
+			name: 'env',
+			type: 'string' as NodePropertyTypes,
+			default: '',
+			placeholder: 'prod',
+			description: '',
+		},
 	];
 }
