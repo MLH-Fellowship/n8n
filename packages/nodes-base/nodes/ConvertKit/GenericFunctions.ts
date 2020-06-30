@@ -30,8 +30,6 @@ export async function convertKitApiRequest(this: IExecuteFunctions | IExecuteSin
 	try {
 		qs.api_secret = credentials.apiSecret;
 
-		console.log(options);
-
 		return await this.helpers.request!(options);
 	} catch (error) {
 		throw new Error(`ConvertKit error response [${error.statusCode}]: ${error.name}`);

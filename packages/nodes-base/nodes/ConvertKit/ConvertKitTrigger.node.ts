@@ -19,6 +19,7 @@ export class ConvertKitTrigger implements INodeType {
 	description: INodeTypeDescription = {
 		displayName: 'Convert Kit Trigger',
 		name: 'convertKitTrigger',
+		icon: 'file:convertKit.png',
 		group: ['trigger'],
 		version: 1,
 		description: 'Handle ConvertKit events via webhooks',
