@@ -20,6 +20,7 @@ export class ConvertKitTrigger implements INodeType {
 		displayName: 'ConvertKit Trigger',
 		name: 'convertKitTrigger',
 		icon: 'file:convertKit.png',
+		subtitle: '={{$parameter["event"]}}',
 		group: ['trigger'],
 		version: 1,
 		description: 'Handle ConvertKit events via webhooks',
@@ -74,11 +75,11 @@ export class ConvertKitTrigger implements INodeType {
 				displayOptions: {
 					show: {
 						event: [
-						'linkClicked'
-						]
-					}
-				}
-			}
+						'linkClicked',
+						],
+					},
+				},
+			},
 		],
 	};
 
@@ -130,12 +131,11 @@ export class ConvertKitTrigger implements INodeType {
 			},
 
 			async delete(this: IHookFunctions): Promise<boolean> {
-				let webhook;
 				const webhookData = this.getWorkflowStaticData('node');
 				if (webhookData.webhookId !== undefined) {
 					const endpoint = `/automations/hooks/${webhookData.webhookId}`;
 					try {
-						webhook = await convertKitApiRequest.call(this, 'DELETE', endpoint, {}, {});
+						await convertKitApiRequest.call(this, 'DELETE', endpoint, {}, {});
 					} catch (e) {
 						return false;
 					}
