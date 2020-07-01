@@ -21,7 +21,7 @@ export async function convertKitApiRequest(this: IExecuteFunctions | IExecuteSin
 		qs,
 		body,
 		uri: uri ||`https://api.convertkit.com/v3${endpoint}`,
-		json: true
+		json: true,
 	};
 	options = Object.assign({}, options, option);
 	if (Object.keys(options.body).length === 0) {
@@ -30,8 +30,11 @@ export async function convertKitApiRequest(this: IExecuteFunctions | IExecuteSin
 	try {
 		qs.api_secret = credentials.apiSecret;
 
+		console.log(options);
+
 		return await this.helpers.request!(options);
 	} catch (error) {
-		throw new Error(`ConvertKit error response [${error.statusCode}]: ${error.name}`);
+		console.log(error);
+		throw new Error(`ConvertKit error response: ${error.message}`);
 	}
 }

@@ -6,14 +6,8 @@ import {
 
 export class ConvertKitApi implements ICredentialType {
 	name = 'convertKitApi';
-	displayName = 'Convert Kit Api';
+	displayName = 'ConvertKit Api';
 	properties = [
-		{
-			displayName: 'API Key',
-			name: 'apiKey',
-			type: 'string' as NodePropertyTypes,
-			default: '',
-		},
 		{
 			displayName: 'API Secret',
 			name: 'apiSecret',

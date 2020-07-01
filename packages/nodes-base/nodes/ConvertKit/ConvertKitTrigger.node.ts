@@ -17,15 +17,15 @@ import {
 
 export class ConvertKitTrigger implements INodeType {
 	description: INodeTypeDescription = {
-		displayName: 'Convert Kit Trigger',
+		displayName: 'ConvertKit Trigger',
 		name: 'convertKitTrigger',
 		icon: 'file:convertKit.png',
 		group: ['trigger'],
 		version: 1,
 		description: 'Handle ConvertKit events via webhooks',
 		defaults: {
-			name: 'Convert Kit Trigger',
-			color: '#885577',
+			name: 'ConvertKit Trigger',
+			color: '#fb6970',
 		},
 		inputs: [],
 		outputs: ['main'],
@@ -49,12 +49,12 @@ export class ConvertKitTrigger implements INodeType {
 				name: 'event',
 				type: 'options',
 				required: true,
-				default: 'activateSubscriber',
+				default: 'subscriberActivated',
 				description: 'The events that can trigger the webhook and whether they are enabled.',
 				options: [
 					{
-						name: 'Activate Subscriber',
-						value: 'activateSubscriber',
+						name: 'Subscriber Activated',
+						value: 'subscriberActivated',
 						description: 'Whether the webhook is triggered when a subscriber is activated.',
 					},
 					{
@@ -103,7 +103,7 @@ export class ConvertKitTrigger implements INodeType {
 				try {
 					qs.target_url = webhookUrl;
 
-					if(event === 'activateSubscriber') {
+					if(event === 'subscriberActivated') {
 						qs.event = {
 							name: 'subscriber.subscriber_activate' ,
 						};
