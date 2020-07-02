@@ -85,7 +85,7 @@ export const tagFields = [
 		description: 'Subscriber email address.',
 	},
 	{
-		displayName: 'Tag Id',
+		displayName: 'Tag ID',
 		name: 'id',
 		type: 'string',
 		required: true,
@@ -102,7 +102,7 @@ export const tagFields = [
 			},
 		},
 		default: '',
-		description: 'Tag id.',
+		description: 'Tag ID.',
 	},
 	{
 		displayName: 'Additional Fields',

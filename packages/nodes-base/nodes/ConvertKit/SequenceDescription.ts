@@ -53,10 +53,10 @@ export const sequenceFields = [
 			},
 		},
 		default: '',
-		description: 'Subscriber email address.',
+		description: `The subscriber's email address.`,
 	},
 	{
-		displayName: 'Sequence Id',
+		displayName: 'Sequence ID',
 		name: 'id',
 		type: 'string',
 		required: true,
@@ -72,7 +72,7 @@ export const sequenceFields = [
 			},
 		},
 		default: '',
-		description: 'Sequence id.',
+		description: 'Sequence ID.',
 	},
 	{
 		displayName: 'Additional Fields',
@@ -96,7 +96,7 @@ export const sequenceFields = [
 				name: 'firstName',
 				type: 'string',
 				default: '',
-				description: 'Subscriber first name.',
+				description: `The subscriber's first name.`,
 			},
 			{
 				displayName: 'Custom Fields',

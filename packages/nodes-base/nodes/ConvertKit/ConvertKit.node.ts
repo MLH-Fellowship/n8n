@@ -154,6 +154,8 @@ export class ConvertKit implements INodeType {
 
 					method = 'DELETE';
 					endpoint = `/custom_fields/${id}`;
+				} else {
+					throw new Error(`The operation "${operation}" is not known!`);
 				}
 			//--------------------------------------------
 			// Form, Sequence, and Tag Operations
@@ -174,13 +176,12 @@ export class ConvertKit implements INodeType {
 
 					if(additionalParams.fields !== undefined) {
 						const fields = {} as IDataObject;
+						const fieldsParams = additionalParams.fields as IDataObject;
+						const field = fieldsParams?.field as IDataObject[];
 
-						// @ts-ignore
-						for(let j = 0; j < additionalParams.fields.field.length; j++) {
-							// @ts-ignore
-							const key = additionalParams.fields.field[j].key as string;
-							// @ts-ignore
-							const value = additionalParams.fields.field[j].value;
+						for(let j = 0; j < field.length; j++) {
+							const key = field[j].key as string;
+							const value = field[j].value as string;
 
 							fields[key] = value;
 						}
@@ -204,9 +205,9 @@ export class ConvertKit implements INodeType {
 				} else if(operation === 'getAll') {
 					method = 'GET';
 					if(resource === 'form') {
-						endpoint = `/forms`;
+						endpoint = '/forms';
 					} else if(resource === 'tag') {
-						endpoint = `/tags`;
+						endpoint = '/tags';
 					} else if(resource === 'sequence') {
 						endpoint = '/sequences';
 					}
@@ -222,7 +223,6 @@ export class ConvertKit implements INodeType {
 
 					method = 'GET';
 					if(resource === 'form') {
-						//TODO make sure this is working
 						endpoint = `/forms/${id}/subscriptions`;
 					} else if(resource === 'tag') {
 						endpoint = `/tags/${id}/subscriptions`;
@@ -248,9 +248,11 @@ export class ConvertKit implements INodeType {
 
 					method = 'POST';
 					endpoint = `/tags/${id}/unsubscribe`;
+				} else {
+					throw new Error(`The operation "${operation}" is not known!`);
 				}
 			} else {
-				throw new Error('Unrecognized resource');
+				throw new Error(`The resource "${resource}" is not known!`);
 			}
 
 			responseData = await convertKitApiRequest.call(this, method, endpoint, {}, qs);

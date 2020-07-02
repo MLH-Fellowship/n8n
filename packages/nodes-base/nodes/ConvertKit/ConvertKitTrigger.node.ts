@@ -75,7 +75,7 @@ export class ConvertKitTrigger implements INodeType {
 				displayOptions: {
 					show: {
 						event: [
-						'linkClicked',
+							'linkClicked',
 						],
 					},
 				},
@@ -89,7 +89,9 @@ export class ConvertKitTrigger implements INodeType {
 			async checkExists(this: IHookFunctions): Promise<boolean> {
 				const webhookData = this.getWorkflowStaticData('node');
 
-				if(webhookData.webhookId) return true;
+				if(webhookData.webhookId) {
+					return true;
+				}
 				return false;
 			},
 
@@ -97,7 +99,7 @@ export class ConvertKitTrigger implements INodeType {
 				let webhook;
 				const webhookUrl = this.getNodeWebhookUrl('default');
 				const event = this.getNodeParameter('event', 0);
-				const endpoint = `/automations/hooks`;
+				const endpoint = '/automations/hooks';
 
 				const qs: IDataObject = {};
 
@@ -106,7 +108,7 @@ export class ConvertKitTrigger implements INodeType {
 
 					if(event === 'subscriberActivated') {
 						qs.event = {
-							name: 'subscriber.subscriber_activate' ,
+							name: 'subscriber.subscriber_activate',
 						};
 					} else if(event === 'linkClicked') {
 						const link = this.getNodeParameter('link', 0) as string;
@@ -116,8 +118,8 @@ export class ConvertKitTrigger implements INodeType {
 						};
 					}
 					webhook = await convertKitApiRequest.call(this, 'POST', endpoint, {}, qs);
-				} catch (e) {
-					throw e;
+				} catch (error) {
+					throw error;
 				}
 
 				if (webhook.rule.id === undefined) {
@@ -136,7 +138,7 @@ export class ConvertKitTrigger implements INodeType {
 					const endpoint = `/automations/hooks/${webhookData.webhookId}`;
 					try {
 						await convertKitApiRequest.call(this, 'DELETE', endpoint, {}, {});
-					} catch (e) {
+					} catch (error) {
 						return false;
 					}
 					delete webhookData.webhookId;
@@ -154,7 +156,7 @@ export class ConvertKitTrigger implements INodeType {
 
 		return {
 			workflowData: [
-				this.helpers.returnJsonArray(returnData)
+				this.helpers.returnJsonArray(returnData),
 			],
 		};
 	}

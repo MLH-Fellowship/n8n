@@ -43,7 +43,7 @@ export const fieldOperations = [
 
 export const fieldFields = [
 	{
-		displayName: 'Field Id',
+		displayName: 'Field ID',
 		name: 'id',
 		type: 'string',
 		required: true,
@@ -59,7 +59,7 @@ export const fieldFields = [
 			},
 		},
 		default: '',
-		description: 'The Id of your custom field.',
+		description: 'The ID of your custom field.',
 	},
 	{
 		displayName: 'Label',

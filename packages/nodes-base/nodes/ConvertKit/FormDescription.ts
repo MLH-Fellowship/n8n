@@ -53,10 +53,10 @@ export const formFields = [
 			},
 		},
 		default: '',
-		description: 'Subscriber email address.',
+		description: `The subscriber's email address.`,
 	},
 	{
-		displayName: 'Form Id',
+		displayName: 'Form ID',
 		name: 'id',
 		type: 'string',
 		required: true,
@@ -72,7 +72,7 @@ export const formFields = [
 			},
 		},
 		default: '',
-		description: 'Form id.',
+		description: 'Form ID.',
 	},
 	{
 		displayName: 'Additional Fields',
@@ -96,7 +96,7 @@ export const formFields = [
 				name: 'firstName',
 				type: 'string',
 				default: '',
-				description: 'Subscriber first name.',
+				description: `The subscriber's first name.`,
 			},
 			{
 				displayName: 'Custom Fields',

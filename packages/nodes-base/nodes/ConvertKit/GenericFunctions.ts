@@ -1,10 +1,17 @@
-import { OptionsWithUri } from 'request';
+import {
+	OptionsWithUri
+} from 'request';
+
 import {
 	IExecuteFunctions,
 	ILoadOptionsFunctions,
 	IExecuteSingleFunctions,
 } from 'n8n-core';
-import { IDataObject, IHookFunctions } from 'n8n-workflow';
+
+import {
+	IDataObject,
+	IHookFunctions
+} from 'n8n-workflow';
 
 export async function convertKitApiRequest(this: IExecuteFunctions | IExecuteSingleFunctions | ILoadOptionsFunctions | IHookFunctions,
 	method: string, endpoint: string, body: any = {}, qs: IDataObject = {}, uri?: string, option: IDataObject = {}): Promise<any> { // tslint:disable-line:no-any
@@ -15,7 +22,7 @@ export async function convertKitApiRequest(this: IExecuteFunctions | IExecuteSin
 
 	let options: OptionsWithUri = {
 		headers: {
-			'Content-Type': 'application/json'
+			'Content-Type': 'application/json',
 		},
 		method,
 		qs,
@@ -30,11 +37,8 @@ export async function convertKitApiRequest(this: IExecuteFunctions | IExecuteSin
 	try {
 		qs.api_secret = credentials.apiSecret;
 
-		console.log(options);
-
 		return await this.helpers.request!(options);
 	} catch (error) {
-		console.log(error);
 		throw new Error(`ConvertKit error response: ${error.message}`);
 	}
 }
