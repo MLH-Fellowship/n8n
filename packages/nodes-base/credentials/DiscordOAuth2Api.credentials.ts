@@ -14,7 +14,7 @@ export class DiscordOAuth2Api implements ICredentialType {
 		{
 			displayName: 'Discord Server',
 			name: 'server',
-			type: 'string' as NodePropertyTypes,
+			type: 'hidden' as NodePropertyTypes,
 			default: 'https://discord.com/api',
 			description: 'The server to connect to. Does only have to get changed if Github Enterprise gets used.',
 		},
